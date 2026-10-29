@@ -15,7 +15,8 @@ const upload = multer({
   limits: { fileSize: MAX_FILE_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
     const isPdf = file.mimetype === "application/pdf" && file.originalname.toLowerCase().endsWith(".pdf");
-    cb(isPdf ? null : new AppError(415, "unsupported_media_type", "Only PDF files are supported."));
+    if (isPdf) cb(null, true);
+    else cb(new AppError(415, "unsupported_media_type", "Only PDF files are supported."));
   },
 });
 
