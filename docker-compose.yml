@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongodb/mongodb-atlas-local:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
+      MONGODB_URI: mongodb://mongo:27017/?directConnection=true
+      CORS_ORIGINS: http://localhost:8080
+    ports:
+      - "3000:3000"
+    volumes:
+      - model-cache:/app/.model-cache
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
+  model-cache:
