@@ -17,6 +17,8 @@ export interface AppDeps {
   generator: AnswerGenerator;
   corsOrigins: string[];
   logger: Logger;
+  /** Requests per minute per client; defaults to 120. */
+  rateLimitPerMinute?: number;
 }
 
 export function createApp(deps: AppDeps): Express {
@@ -39,7 +41,17 @@ export function createApp(deps: AppDeps): Express {
 
   app.use(helmet());
   app.use(cors({ origin: deps.corsOrigins }));
-  app.use(rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: "draft-8", legacyHeaders: false }));
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      limit: deps.rateLimitPerMinute ?? 120,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      handler: (_req, res) => {
+        res.status(429).json({ error: { code: "rate_limited", message: "Too many requests." } });
+      },
+    }),
+  );
 
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok" });
