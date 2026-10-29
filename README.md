@@ -42,6 +42,7 @@ Open http://localhost:8080. The first upload downloads the embedding model (cach
 Local development (Node 24, a MongoDB Atlas Local container on port 27017):
 
 ```bash
+docker compose up -d mongo
 cp .env.example .env   # fill in ANTHROPIC_API_KEY
 npm install
 npm run dev:server
